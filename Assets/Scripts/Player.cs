@@ -6,12 +6,14 @@ public class Player : MonoBehaviour
 {
     [SerializeField] bool mouseLook = false;
     [SerializeField] float moveSpeed = 3f;
-
+    [SerializeField] Transform directionIndicatorPivot;
     
 
     private Controls controls;
     private Rigidbody2D rb;
     private Animator anim;
+
+    private Vector3 worldMousePos;
 
     private void Awake()
     {
@@ -33,11 +35,17 @@ public class Player : MonoBehaviour
         controls.Disable();
     }
 
+    private void Update()
+    {
+        worldMousePos = Camera.main.ScreenToWorldPoint(controls.Player.Look.ReadValue<Vector2>());
+    }
+
     private void FixedUpdate()
     {
+        SetIndicatorDirection(worldMousePos);
+
         if (mouseLook)
         {
-            Vector3 worldMousePos = Camera.main.ScreenToWorldPoint(controls.Player.Look.ReadValue<Vector2>());
             FaceDirection(worldMousePos);
         }
         
@@ -46,7 +54,6 @@ public class Player : MonoBehaviour
 
     private void DoMeleeAttack()
     {
-        Vector3 worldMousePos = Camera.main.ScreenToWorldPoint(controls.Player.Look.ReadValue<Vector2>());
         FaceDirection(worldMousePos);
         Debug.Log("Melee Attack");
     }
@@ -73,5 +80,13 @@ public class Player : MonoBehaviour
         
         anim.SetFloat("Horizontal", vector.x);
         anim.SetFloat("Vertical", vector.y);
+    }
+
+    private void SetIndicatorDirection(Vector2 vector)
+    {
+        Vector2 directionFromPlayer = vector - new Vector2(transform.position.x, transform.position.y);
+        float angle = Mathf.Atan2(directionFromPlayer.y, directionFromPlayer.x) * Mathf.Rad2Deg;
+        directionIndicatorPivot.rotation = Quaternion.AngleAxis(angle - 90f, Vector3.forward);
+
     }
 }
