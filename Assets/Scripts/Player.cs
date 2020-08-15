@@ -6,14 +6,17 @@ public class Player : MonoBehaviour
 {
     [SerializeField] bool mouseLook = false;
     [SerializeField] float moveSpeed = 3f;
+    [SerializeField] float meleeAttackDelay = 1f;
+
     [SerializeField] Transform directionIndicatorPivot;
-    
+    [SerializeField] Transform attackCollider;
 
     private Controls controls;
     private Rigidbody2D rb;
     private Animator anim;
 
     private Vector3 worldMousePos;
+    private float timeSinceLastMeleeAttack = 0f;
 
     private void Awake()
     {
@@ -21,7 +24,7 @@ public class Player : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
 
-        controls.Player.MeleeAttack.performed += ctx => DoMeleeAttack();
+        //controls.Player.MeleeAttack.performed += ctx => DoMeleeAttack();
         
     }
 
@@ -38,6 +41,7 @@ public class Player : MonoBehaviour
     private void Update()
     {
         worldMousePos = Camera.main.ScreenToWorldPoint(controls.Player.Look.ReadValue<Vector2>());
+        
     }
 
     private void FixedUpdate()
@@ -50,12 +54,38 @@ public class Player : MonoBehaviour
         }
         
         DoMove(controls.Player.Move.ReadValue<Vector2>());
+
+
+
+        DoMeleeAttack(controls.Player.MeleeAttack.ReadValue<float>());
     }
 
-    private void DoMeleeAttack()
+    private void DoMeleeAttack(float active)
     {
-        FaceDirection(worldMousePos);
-        Debug.Log("Melee Attack");
+        if (timeSinceLastMeleeAttack > 0f)
+        {
+            if (timeSinceLastMeleeAttack <= meleeAttackDelay * 0.5f)
+            {
+                attackCollider.gameObject.SetActive(false);
+            }
+            timeSinceLastMeleeAttack -= Time.fixedDeltaTime;
+        }
+
+        if (active > 0f)
+        {
+            if (timeSinceLastMeleeAttack <= 0f)
+            {
+                mouseLook = true;
+                Debug.Log("Melee Attack");
+                attackCollider.gameObject.SetActive(true);
+                timeSinceLastMeleeAttack += meleeAttackDelay;
+            }
+        }
+        else
+        {
+            mouseLook = false;
+        }
+        
     }
 
     private void DoMove(Vector2 direction)
